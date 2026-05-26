@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HematoBank — Gestión de Donantes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <link href="css/dashboard.css" rel="stylesheet" />
+
+    <style>
+        /* Estilos adicionales específicos para optimizar la vista de Donantes y Modals sin romper el CSS general */
+        .page-header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .btn-primary {
+            background-color: #dc2626;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #b91c1c;
+        }
+
+        .table-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 12px;
+        }
+
+        .count-badge {
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        /* Estilos del Modal del Donante y Firma */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-wrapper {
+            background: white;
+            width: 100%;
+            max-width: 650px;
+            max-height: 90vh;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.open .modal-wrapper {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 1.25rem;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .form-group-full {
+            grid-column: span 2;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+
+        /* Contenedor de Firma */
+        .signature-box {
+            border: 1px dashed #cbd5e1;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        #canvasFirma {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            cursor: crosshair;
+        }
+
+        .signature-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        /* Paginador UI */
+        .pagination-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .pagination-btn {
+            background: white;
+            border: 1px solid #cbd5e1;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pagination-btn:hover {
+            background: #f8fafc;
+        }
+
+        /* Celdas del Donante personalizados */
+        .donor-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .donor-avatar {
+            width: 36px;
+            height: 36px;
+            background: #fee2e2;
+            color: #dc2626;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .donor-cell-info .name {
+            font-weight: 500;
+            color: #0f172a;
+        }
+
+        .donor-cell-info .doc {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .actions-cell .action-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 6px;
+            font-size: 1rem;
+            transition: color 0.2s;
+        }
+
+        .actions-cell .action-btn:hover {
+            color: #ef4444;
+        }
+    </style>
+</head>
+
+<body>
+
+    <aside class="sidebar">
+        <div class="sb-brand">
+            <div class="sb-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C12 2 5 9.5 5 14.5a7 7 0 0 0 14 0C19 9.5 12 2 12 2z" />
+                </svg>
+            </div>
+            <div>
+                <div class="sb-brand-name">HematoBank</div>
+                <div class="sb-brand-sub">Blood Bank System</div>
+            </div>
+        </div>
+
+        <nav class="sb-nav">
+            <div class="sb-section">Principal</div>
+
+            <div class="nav-item" onclick="location.href='dashboard.html'">
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="14" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                </svg>
+                Dashboard
+            </div>
+
+            <div class="nav-item active">
+                <svg viewBox="0 0 24 24">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                Donantes
+            </div>
+
+            <div class="nav-item" onclick="location.href='donaciones.html'">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2C12 2 5 9.5 5 14.5a7 7 0 0 0 14 0C19 9.5 12 2 12 2z" />
+                </svg>
+                Donaciones
+            </div>
+
+            <div class="sb-section">Inventario</div>
+
+            <div class="nav-item" onclick="location.href='inventario.html'">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
+                </svg>
+                Inventario
+            </div>
+        </nav>
+
+        <div class="sb-footer">
+            <div class="user-chip">
+                <div class="avatar"><i class="fa-regular fa-user"></i></div>
+                <div class="user-info">
+                    <div class="name" id="sidebar-username">Cargando...</div>
+                    <div class="role">Sesión Activa</div>
+                </div>
+                <button class="logout-btn" onclick="logout()" title="Cerrar sesión">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+        <div class="topbar">
+            <div class="page-title">Gestión de Donantes</div>
+        </div>
+
+        <div class="content">
+            <div class="page-header-actions">
+                <div>
+                    <h2 style="font-family: 'Playfair Display', serif; font-size: 1.5rem;">Directorio Clínico</h2>
+                    <p style="color: #64748b; font-size: 0.85rem;">Consulta y registro oficial de donantes aptos.</p>
+                </div>
+                <button class="btn-primary" onclick="openModal('donorModal')">
+                    <i class="fa-solid fa-user-plus"></i> Registrar Donante
+                </button>
+            </div>
+
+            <div class="card fade-in">
+                <div class="table-meta">
+                    <span class="count-badge" id="countLabel">0 registros</span>
+                    <span style="font-size: 0.85rem; color: #64748b;" id="pageInfo">Página 1 de 1</span>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Donante / Documento</th>
+                            <th>Grupo Sanguíneo</th>
+                            <th>Peso</th>
+                            <th>Teléfono</th>
+                            <th>Última Donación</th>
+                            <th>Consentimiento</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="donantesBody">
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: #94a3b8; padding: 30px;">Cargando listado
+                                de donantes...</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="pagination-bar">
+                    <button class="pagination-btn" id="btnPrev" onclick="cambiarPagina(-1)">
+                        <i class="fa-solid fa-arrow-left"></i> Anterior
+                    </button>
+                    <button class="pagination-btn" id="btnNext" onclick="cambiarPagina(1)">
+                        Siguiente <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="donorModal" class="modal-overlay" onclick="closeOnBg(e, 'donorModal')">
+        <div class="modal-wrapper">
+            <div class="modal-header">
+                <div class="modal-title">Nuevo Registro de Donante</div>
+                <button class="modal-close" onclick="closeModal('donorModal')"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="consentimientoForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="nombres">Nombres *</label>
+                            <input type="text" id="nombres" required placeholder="Ej. Juan Carlos">
+                        </div>
+                        <div class="form-group">
+                            <label for="apellidos">Apellidos *</label>
+                            <input type="text" id="apellidos" required placeholder="Ej. Pérez Gómez">
+                        </div>
+                        <div class="form-group">
+                            <label for="donanteId">Documento de Identidad *</label>
+                            <input type="text" id="donanteId" required placeholder="C.C / P.A / C.E">
+                        </div>
+                        <div class="form-group">
+                            <label for="fechaNacimiento">Fecha de Nacimiento *</label>
+                            <input type="date" id="fechaNacimiento" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tipoSangre">Tipo de Sangre *</label>
+                            <select id="tipoSangre" required>
+                                <option value="" disabled selected>Seleccione...</option>
+                                <option value="O_POSITIVO">O+</option>
+                                <option value="O_NEGATIVO">O-</option>
+                                <option value="A_POSITIVO">A+</option>
+                                <option value="A_NEGATIVO">A-</option>
+                                <option value="B_POSITIVO">B+</option>
+                                <option value="B_NEGATIVO">B-</option>
+                                <option value="AB_POSITIVO">AB+</option>
+                                <option value="AB_NEGATIVO">AB-</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="peso">Peso (kg) *</label>
+                            <input type="number" id="peso" step="0.1" min="50" required placeholder="Mínimo 50kg">
+                        </div>
+                        <div class="form-group">
+                            <label for="telefono">Teléfono Celular *</label>
+                            <input type="tel" id="telefono" required placeholder="Ej. 3123456789">
+                        </div>
+                        <div class="form-group">
+                            <label for="correo">Correo Electrónico *</label>
+                            <input type="email" id="correo" required placeholder="ejemplo@correo.com">
+                        </div>
+                        <div class="form-group alert-full form-group-full">
+                            <label for="direccion">Dirección de Residencia</label>
+                            <input type="text" id="direccion" placeholder="Calle, Avenida, Barrio...">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Método de Firma Autógrafa</label>
+                        <div class="toggle-group">
+                            <button type="button" id="btnFirmaDibujar" class="toggle-btn active"
+                                onclick="setModoFirma('dibujar')">Trazar Firma</button>
+                            <button type="button" id="btnFirmaSubir" class="toggle-btn"
+                                onclick="setModoFirma('subir')">Subir Documento</button>
+                        </div>
+                    </div>
+
+                    <div id="wrapperCanvas" class="signature-box">
+                        <canvas id="canvasFirma" width="450" height="200"
+                            style="border: 1px dashed #cbd5e1; background: #fff;"></canvas>
+                        <br>
+                        <button type="button" id="btnClearCanvas" class="btn btn-outline" style="margin-top: 15px;">
+                            <i class="fa-solid fa-eraser"></i> Limpiar Trazo
+                        </button>
+                    </div>
+
+                    <div id="wrapperArchivo" class="signature-box" style="display: none; padding: 40px;">
+                        <i class="fa-solid fa-cloud-arrow-up"
+                            style="font-size: 3rem; color: #94a3b8; margin-bottom: 15px;"></i>
+                        <h4>Sube el archivo escaneado</h4>
+                        <input type="file" id="archivoFirma" name="archivoFirma" accept="image/*, .pdf, application/pdf"
+                            style="margin-top: 15px;">
+                    </div>
+                    <div class="consent-box">
+                        <input type="checkbox" id="consent" name="consent" required>
+                        <label for="consent" style="cursor:pointer;">
+                            El donante acepta el <strong>consentimiento informado</strong> y autoriza el uso de sus
+                            datos para el proceso de donación de sangre de acuerdo con la normativa vigente.
+                        </label>
+                    </div>
+
+                    <div id="consentMsg"
+                        style="display: none; padding: 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; margin-bottom: 16px; text-align: center;">
+                    </div>
+
+                    <button type="submit" class="btn-primary"
+                        style="width: 100%; justify-content: center; padding: 12px;">
+                        <i class="fa-solid fa-floppy-disk"></i> Validar y Guardar Registro
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+
+    <script>
+        let paginaActual = 0;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Cargar el nombre del usuario en el sidebar
+            const username = localStorage.getItem("username") || "Usuario";
+            const sbUser = document.getElementById("sidebar-username");
+            if (sbUser) sbUser.textContent = username;
+
+            // Inicializar la carga inicial con la página 0 desde app.js
+            if (typeof initDonantes === "function") {
+                initDonantes(paginaActual);
+            }
+        });
+
+        // Manejador del paginador
+        function cambiarPagina(direccion) {
+            paginaActual += direccion;
+            if (paginaActual < 0) paginaActual = 0;
+
+            if (typeof initDonantes === "function") {
+                initDonantes(paginaActual);
+            }
+        }
+    </script>
+</body>
+
+</html>

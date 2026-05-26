@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HematoBank — Donaciones</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="css/dashboard.css" rel="stylesheet">
+    <script src="js/app.js"></script>
+
+    <style>
+        .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.5rem; }
+        .stat-mini { background:#fff; border:1px solid #f1f5f9; border-radius:12px; padding:1rem 1.25rem; }
+        .stat-mini .label { font-size:12px; color:#94a3b8; font-weight:500; text-transform:uppercase; letter-spacing:.5px; }
+        .stat-mini .value { font-size:22px; font-weight:700; color:#1e293b; margin-top:2px; }
+        .stat-mini .sub { font-size:12px; color:#64748b; margin-top:2px; }
+        .filters-bar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:1.5rem; }
+        .filter-input { padding:8px 14px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; font-family:inherit; background:#fff; color:#1e293b; outline:none; }
+        .filter-input:focus { border-color:#e11d48; }
+        .filter-select { padding:8px 14px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; font-family:inherit; background:#fff; color:#1e293b; outline:none; cursor:pointer; }
+        .search-wrap { position:relative; flex:1; min-width:220px; }
+        .search-wrap i { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:14px; }
+        .search-wrap input { padding-left:36px; width:100%; }
+        .table-card { background:#fff; border-radius:16px; border:1px solid #f1f5f9; overflow:hidden; }
+        .table-toolbar { display:flex; justify-content:space-between; align-items:center; padding:1.25rem 1.5rem; border-bottom:1px solid #f1f5f9; }
+        .table-toolbar h3 { font-size:15px; font-weight:600; color:#1e293b; margin:0; }
+        .table-toolbar span { font-size:13px; color:#94a3b8; }
+        .dt { width:100%; border-collapse:collapse; }
+        .dt thead tr { background:#f8fafc; }
+        .dt th { padding:12px 16px; text-align:left; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
+        .dt td { padding:14px 16px; font-size:14px; color:#1e293b; border-bottom:1px solid #f8fafc; vertical-align:middle; }
+        .dt tbody tr:hover { background:#fafbfc; }
+        .dt tbody tr:last-child td { border-bottom:none; }
+        .blood-chip { display:inline-flex; align-items:center; justify-content:center; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700; background:#fce7ea; color:#be123c; min-width:36px; }
+        .status-pill { display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:500; }
+        .status-pill.ok { background:#dcfce7; color:#15803d; }
+        .status-pill.pending { background:#fef9c3; color:#a16207; }
+        .status-pill.blocked { background:#fee2e2; color:#b91c1c; }
+        .status-pill::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+        .code-pill { font-family:monospace; font-size:12px; background:#f1f5f9; padding:3px 8px; border-radius:6px; color:#475569; }
+        .actions-cell { display:flex; gap:6px; }
+        .action-btn { width:32px; height:32px; border:1px solid #e2e8f0; border-radius:8px; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#64748b; transition:all .15s; }
+        .action-btn:hover { border-color:#e11d48; color:#e11d48; background:#fce7ea; }
+        .pagination { display:flex; justify-content:space-between; align-items:center; padding:1rem 1.5rem; border-top:1px solid #f1f5f9; }
+        .pagination span { font-size:13px; color:#64748b; }
+        .page-btns { display:flex; gap:4px; }
+        .page-btn { width:32px; height:32px; border:1px solid #e2e8f0; border-radius:8px; background:#fff; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#64748b; transition:all .15s; }
+        .page-btn:hover,.page-btn.active { background:#e11d48; color:#fff; border-color:#e11d48; }
+        .donor-cell { display:flex; align-items:center; gap:10px; }
+        .donor-avatar { width:36px; height:36px; border-radius:50%; background:#fce7ea; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:#e11d48; flex-shrink:0; }
+        .vol-bar { width:80px; height:6px; background:#f1f5f9; border-radius:3px; overflow:hidden; display:inline-block; vertical-align:middle; margin-right:6px; }
+        .vol-fill { height:100%; border-radius:3px; background:#e11d48; }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="sb-brand">
+        <div class="sb-icon"><svg viewBox="0 0 24 24"><path d="M12 2C12 2 5 9.5 5 14.5a7 7 0 0 0 14 0C19 9.5 12 2 12 2z"/></svg></div>
+        <div><div class="sb-brand-name">HematoBank</div><div class="sb-brand-sub">Blood Bank System</div></div>
+    </div>
+    <nav class="sb-nav">
+        <div class="sb-section">Principal</div>
+        <div class="nav-item" onclick="location.href='dashboard.html'">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+            Dashboard
+        </div>
+        <div class="nav-item" onclick="location.href='donantes.html'">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Donantes
+        </div>
+        <div class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="M12 2C12 2 5 9.5 5 14.5a7 7 0 0 0 14 0C19 9.5 12 2 12 2z"/></svg>
+            Donaciones
+        </div>
+
+        <div class="sb-section">Inventario</div>
+        <div class="nav-item" onclick="location.href='inventario.html'">
+            <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+            Inventario
+        </div>
+    </nav>
+    <div class="sb-footer">
+        <div class="user-chip">
+            <div class="avatar"><i class="fa-regular fa-user"></i></div>
+            <div class="user-info"><div class="name" id="sidebar-username">Usuario</div><div class="role">Sesión Activa</div></div>
+            <button class="logout-btn" onclick="logout()" title="Cerrar sesión">
+                <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
+        </div>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="topbar">
+        <div class="page-title">Donaciones — Registro</div>
+        <div class="topbar-actions">
+            <button class="btn-ghost" onclick="loadDonations()"><i class="fa-solid fa-rotate-right"></i> Refrescar</button>
+            <button class="btn-red" onclick="openModal('donationModal')">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Nueva donación
+            </button>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <div class="stats-row fade-in">
+            <div class="stat-mini">
+                <div class="label">Total donaciones</div>
+                <div class="value" id="statTotal">...</div>
+                <div class="sub">Registros históricos</div>
+            </div>
+            <div class="stat-mini">
+                <div class="label">Página actual</div>
+                <div class="value" id="statPage">...</div>
+                <div class="sub">Mostrando bloque actual</div>
+            </div>
+            <div class="stat-mini">
+                <div class="label">Límite por página</div>
+                <div class="value">8</div>
+                <div class="sub">Registros visibles</div>
+            </div>
+            <div class="stat-mini">
+                <div class="label">Gestión</div>
+                <div class="value"><i class="fa-solid fa-server" style="color:#e11d48;"></i></div>
+                <div class="sub">Sincronizado con API REST</div>
+            </div>
+        </div>
+
+        <div class="filters-bar fade-in">
+            <button class="btn-ghost" onclick="exportCSV()"><i class="fa-solid fa-download"></i> Exportar vista actual CSV</button>
+            <button class="btn-ghost" onclick="exportarPDFGeneral()" style="color: #e11d48; border-color: #e11d48; background: #fff;"><i class="fa-solid fa-file-pdf"></i> Exportar Historial Completo PDF</button>
+        </div>
+
+        <div class="table-card fade-in">
+            <div class="table-toolbar">
+                <h3>Historial de donaciones</h3>
+                <span id="countLabel">...</span>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="dt">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Donante</th>
+                            <th>Tipo</th>
+                            <th>Volumen</th>
+                            <th>Fecha</th>
+                            <th>Observaciones</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="donacionesBody">
+                        <tr><td colspan="8" style="text-align:center;padding:3rem;color:#94a3b8;">Cargando historial de extracciones...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination">
+                <span id="pageInfo">Mostrando datos...</span>
+                <div class="page-btns" id="pageBtns"></div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<div class="modal-overlay" id="donationModal" onclick="closeOnBg(event,'donationModal')">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Registrar nueva donación</h3>
+            <button class="close-btn" onclick="closeModal('donationModal')">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="form-grid">
+            <div class="form-field full">
+                <label>Verificación de Donante (Por Documento)</label>
+                <div class="search-wrap" style="display:flex; gap:8px;">
+                    <input type="text" id="donorSearch" placeholder="Ej. 12345678" style="padding-left:14px; flex:1;" oninput="handleSearchInput()">
+                </div>
+            </div>
+            <div class="form-field">
+                <label>Cantidad (mL)</label>
+                <input type="number" id="cantidadML" placeholder="450" min="1" value="450">
+            </div>
+            <div class="form-field">
+                <label>Fecha de donación</label>
+                <input type="date" id="fechaDonacion" disabled title="La fecha se asigna automáticamente por el servidor">
+            </div>
+            <div class="form-field full">
+                <label>Observaciones</label>
+                <textarea id="observaciones" placeholder="Notas médicas o condiciones especiales…" style="resize:vertical;min-height:80px;"></textarea>
+            </div>
+            <div id="validationMsg" style="grid-column:span 2;padding:10px 14px;border-radius:8px;display:none;font-size:13px;font-weight:500;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-ghost" onclick="closeModal('donationModal')">Cancelar</button>
+            <button class="btn-red" onclick="saveDonation()">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                Registrar donación
+            </button>
+        </div>
+    </div>
+</div>
+</body>
+</html>

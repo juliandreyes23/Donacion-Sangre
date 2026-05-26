@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Sistema de Donación de Sangre</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- VARIABLES DE DISEÑO --- */
+        :root {
+            --primary-color: #e11d48;
+            --primary-gradient: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            height: 100vh; /* Forzamos a ocupar solo la ventana, sin scroll */
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            background-color: #0f172a; 
+        }
+
+        /* --- FONDO ANIMADO DE GRADIENTES FLUIDOS --- */
+        .ambient-background {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            z-index: 1; /* Fondo detrás de todo */
+            background: linear-gradient(
+                -45deg, 
+                #f1f5f9, 
+                #fee2e2, 
+                #f8fafc, 
+                #fecdd3, 
+                #e2e8f0
+            );
+            background-size: 400% 400%;
+            animation: gradientFlow 15s ease infinite;
+        }
+
+        .ambient-background::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: radial-gradient(rgba(0,0,0,0.03) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- CONTENEDOR LOGIN (GLASSMORPHISM REFINADO) --- */
+        .login-card {
+            position: relative;
+            z-index: 2; /* Por encima del fondo */
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--shadow-lg), inset 0 0 0 1px rgba(255,255,255,0.2);
+            width: 100%;
+            max-width: 400px; /* Un poco más angosto para que se vea más proporcionado */
+            padding: 2.5rem 2rem; /* Padding equilibrado en todos los lados */
+            margin: 0 1.5rem; /* Margen para pantallas pequeñas */
+            animation: formEntrance 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        @keyframes formEntrance {
+            0% { opacity: 0; transform: translateY(40px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* --- CABECERA --- */
+        .brand-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Asegura el centrado absoluto de los elementos hijos */
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .brand-icon {
+            width: 60px;
+            height: 60px;
+            background: #ffffff;
+            color: var(--primary-color);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 10px 25px rgba(225, 29, 72, 0.15);
+            position: relative;
+        }
+
+        .brand-icon::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: var(--primary-gradient);
+            border-radius: 20px;
+            z-index: -1;
+            opacity: 0.3;
+            animation: pulseGlow 2s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            from { opacity: 0.2; transform: scale(1); }
+            to { opacity: 0.5; transform: scale(1.05); }
+        }
+
+        .brand-header h1 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.5rem; /* Tamaño ligeramente ajustado para balance */
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.25rem;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* --- CAMPOS DE ENTRADA --- */
+        .form-group {
+            margin-bottom: 1.25rem;
+            width: 100%;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 0.4rem;
+            margin-left: 0.2rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 1rem;
+            transition: color 0.3s ease;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem 0.8rem 2.75rem; /* Padding izquierdo ajustado */
+            background-color: var(--input-bg);
+            border: 1px solid rgba(255,255,255,0.8);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+
+        .form-control:focus {
+            background-color: #ffffff;
+            border-color: #fda4af;
+            box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
+        }
+
+        .form-control:focus + .input-icon {
+            color: var(--primary-color);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            padding: 5px; 
+        }
+        
+        .toggle-password:hover { 
+            color: #475569; 
+        }
+
+        /* --- BOTÓN DE LOGIN --- */
+        .btn-submit {
+            width: 100%;
+            padding: 0.85rem;
+            background: var(--primary-gradient);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px rgba(225, 29, 72, 0.3);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(225, 29, 72, 0.4);
+            background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+        }
+
+        .btn-submit:active {
+            transform: translateY(1px);
+        }
+
+        .btn-submit:disabled {
+            background: #cbd5e1;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* --- MENSAJES DE ESTADO --- */
+        .status-msg {
+            display: none;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 1.25rem;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        
+        .login-footer strong {
+            color: #475569;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-background"></div>
+
+    <div class="login-card">
+        <div class="brand-header">
+            <div class="brand-icon">
+                <i class="fa-solid fa-droplet"></i>
+            </div>
+            <h1>Sistema de Donación</h1>
+            <p>Por favor, ingresa tus credenciales</p>
+        </div>
+
+        <div id="loginMsg" class="status-msg"></div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="username" class="form-label">Usuario</label>
+                <div class="input-wrapper">
+                    <input type="text" id="username" class="form-control" placeholder="usuario.adso" required autocomplete="username">
+                    <i class="fa-solid fa-user input-icon"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Contraseña</label>
+                <div class="input-wrapper">
+                    <input type="password" id="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                    <i class="fa-solid fa-eye toggle-password" onclick="togglePasswordVisibility()"></i>
+                </div>
+            </div>
+
+            <button type="submit" id="btnSubmit" class="btn-submit">
+                <span>Ingresar al Panel</span>
+                <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            </button>
+        </form>
+
+        <div class="login-footer">
+            Desarrollado para Análisis y Desarrollo de Software<br>
+            <strong>SENA CIMM · 2026</strong>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:8080/api";
+
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.querySelector('.toggle-password');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.replace('fa-eye', 'fa-eye-slash');
+                toggleIcon.style.color = '#e11d48';
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.replace('fa-eye-slash', 'fa-eye');
+                toggleIcon.style.color = '#94a3b8';
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const msgEl = document.getElementById("loginMsg");
+            const btnEl = document.getElementById("btnSubmit");
+            const userInput = document.getElementById("username").value.trim();
+            const passInput = document.getElementById("password").value;
+
+            msgEl.style.display = "block";
+            msgEl.style.background = "rgba(241, 245, 249, 0.85)";
+            msgEl.style.color = "#475569";
+            msgEl.style.border = "1px solid #e2e8f0";
+            msgEl.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Autenticando...`;
+            
+            btnEl.disabled = true;
+            const originalBtnText = btnEl.innerHTML;
+            btnEl.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Procesando...`;
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: userInput, password: passInput })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.mensaje || data.message || "Usuario o contraseña incorrectos");
+                }
+
+                msgEl.style.background = "rgba(220, 252, 231, 0.9)";
+                msgEl.style.color = "#15803d";
+                msgEl.style.border = "1px solid #bbf7d0";
+                msgEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Credenciales validadas. Redirigiendo...`;
+
+                localStorage.setItem("token", data.token);
+                localStorage.setItem("username", userInput);
+                if(data.rol) localStorage.setItem("rol", data.rol);
+
+                setTimeout(() => {
+                    location.href = "dashboard.html"; 
+                }, 1200);
+
+            } catch (error) {
+                msgEl.style.background = "rgba(254, 226, 226, 0.9)";
+                msgEl.style.color = "#b91c1c";
+                msgEl.style.border = "1px solid #fecaca";
+                msgEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${error.message}`;
+                
+                btnEl.disabled = false;
+                btnEl.innerHTML = originalBtnText;
+            }
+        }
+    </script>
+</body>
+</html>
